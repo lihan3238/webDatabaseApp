@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,45 +6,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>电影数据库查询应用</title>
-    <link rel="stylesheet" href="static/css/styles.css">
-    <link rel="icon" href="static/imgs/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="shortcut icon" href="/static/imgs/favicon.ico" type="image/x-icon">
 </head>
 
 <body>
-    <h1>Movie Search</h1>
-    <form id="searchForm">
-        <input type="text" id="userid" name="userid" placeholder="Enter User ID">
-        <button type="submit">Search</button>
-    </form>
-    <div id="results"></div>
+    <div class="container">
+        <h1>电影数据库查询应用</h1>
+        <form id="searchForm">
+            <label for="userId">用户ID:</label>
+            <input type="text" id="userId" name="userId" required>
 
-    <!-- Add debugging output -->
-    <pre id="debug"></pre>
+            <label for="keyword">关键词:</label>
+            <input type="text" id="keyword" name="keyword">
+
+            <label for="year">年代:</label>
+            <input type="text" id="year" name="year">
+
+            <label for="tag">标签:</label>
+            <input type="text" id="tag" name="tag">
+
+            <select id="task" name="task">
+                <option value="task_a">任务A：根据用户ID，搜索用户所看的电影名字和评分，按时间从新到旧排序，并给出电影的关联度评分最高的前三个标签；</option>
+                <option value="task_b">任务B：查询不同年代（如1980，1990）的电影，并按受欢迎程度排序。</option>
+                <option value="task_c">任务C：查询某一风格（genre）最受欢迎的20部电影（请给出你的最受欢迎的定义，风格数据在电影表（movies.csv）内），</option>
+                <option value="task_d">任务D：根据用户性别推荐最受欢迎的电影20部电影，</option>
+                <option value="task_e">任务E：区分性别，查询高于某个评分的打分情况.</option>
+            </select>
+
+            <button type="button" onclick="search()">搜索</button>
+        </form>
+
+        <div id="results">
+            <div id="movieResults"></div>
+        </div>
+    </div>
 
     <script>
-        document.getElementById('searchForm').onsubmit = function (event) {
-            event.preventDefault();
-            var userid = document.getElementById('userid').value;
-            fetch('/search?userid=' + userid)
-                .then(function (response) {
-                    return response.json();
-                })
-                .then(function (movies) {
-                    // Output debug information
-                    document.getElementById('debug').textContent = JSON.stringify(movies, null, 2);
+        function search() {
+            const userId = document.getElementById("userId").value;
+            const keyword = document.getElementById("keyword").value;
+            const year = document.getElementById("year").value;
+            const tag = document.getElementById("tag").value;
+            const task = document.getElementById("task").value;
 
-                    var results = document.getElementById('results');
-                    results.innerHTML = '';
-                    movies.forEach(function (movie) {
-                        var div = document.createElement('div');
-                        div.innerHTML = 'Title: ' + movie.Title + '<br>Rating: ' + movie.Rating + '<br>Tags: ' + movie.Tags.join(', ');
-                        results.appendChild(div);
-                    });
-                })
-                .catch(function (error) {
-                    console.error(error);
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/");
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        const result = JSON.parse(xhr.responseText);
+                        displayResults(result, task);
+                    } else {
+                        console.error("Failed to fetch data");
+                    }
+                }
+            };
+
+            const params = `userId=${userId}&keyword=${keyword}&year=${year}&tag=${tag}&task=${task}`;
+            xhr.send(params);
+        }
+
+        function displayResults(result, task) {
+
+            console.log("Result received:", result);
+            const movieResultsDiv = document.getElementById("movieResults");
+            movieResultsDiv.innerHTML = "";
+
+            if (task === "task_a") {
+                result.forEach(userMovieInfo => {
+                    const movieDiv = document.createElement("div");
+                    movieDiv.innerHTML = `<b>${userMovieInfo.Movie.Title}</b> (Rating: ${userMovieInfo.Movie.Rating})<br>`;
+                    movieDiv.innerHTML += `Top Tags: ${userMovieInfo.TopTags.join(", ")}<br><br>`;
+                    movieResultsDiv.appendChild(movieDiv);
                 });
-        };
+            } else if (task === "task_b" || task === "task_c" || task === "task_d" || task === "task_e") {
+                result.forEach(movie => {
+                    const movieDiv = document.createElement("div");
+                    movieDiv.innerHTML = `<b>${movie.Title}</b> (Rating: ${movie.Rating})<br><br>`;
+                    movieResultsDiv.appendChild(movieDiv);
+                });
+            }
+        }
     </script>
 </body>
 
