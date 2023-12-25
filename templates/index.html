@@ -6,33 +6,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>电影数据库查询应用</title>
     <link rel="stylesheet" href="static/css/styles.css">
+    <link rel="icon" href="static/imgs/favicon.ico" type="image/x-icon">
 </head>
 
 <body>
-    <div class="container">
-        <h1>电影数据库查询应用</h1>
-        <form id="searchForm">
-            <label for="userId">用户ID:</label>
-            <input type="text" id="userId" name="userId" required>
+    <h1>Movie Search</h1>
+    <form id="searchForm">
+        <input type="text" id="userid" name="userid" placeholder="Enter User ID">
+        <button type="submit">Search</button>
+    </form>
+    <div id="results"></div>
 
-            <label for="keyword">关键词:</label>
-            <input type="text" id="keyword" name="keyword">
+    <!-- Add debugging output -->
+    <pre id="debug"></pre>
 
-            <label for="year">年代:</label>
-            <input type="text" id="year" name="year">
+    <script>
+        document.getElementById('searchForm').onsubmit = function (event) {
+            event.preventDefault();
+            var userid = document.getElementById('userid').value;
+            fetch('/search?userid=' + userid)
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (movies) {
+                    // Output debug information
+                    document.getElementById('debug').textContent = JSON.stringify(movies, null, 2);
 
-            <label for="genre">风格:</label>
-            <input type="text" id="genre" name="genre">
-
-            <button type="button" onclick="searchMovies()">搜索</button>
-        </form>
-
-        <div id="results">
-            <!-- 查询结果将显示在这里 -->
-        </div>
-    </div>
-
-    <script src="static/js/script.js"></script>
+                    var results = document.getElementById('results');
+                    results.innerHTML = '';
+                    movies.forEach(function (movie) {
+                        var div = document.createElement('div');
+                        div.innerHTML = 'Title: ' + movie.Title + '<br>Rating: ' + movie.Rating + '<br>Tags: ' + movie.Tags.join(', ');
+                        results.appendChild(div);
+                    });
+                })
+                .catch(function (error) {
+                    console.error(error);
+                });
+        };
+    </script>
 </body>
 
 </html>
