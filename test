@@ -1,0 +1,103 @@
+// main.go
+package main
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"strconv"
+
+	_ "github.com/go-sql-driver/mysql"
+)
+
+type ResultA struct {
+	MovieID int    `json:"movieID"`
+	Rating  string `json:"rating"`
+}
+
+// 修改 executeQuery 函数返回结果
+func executeQuery(db *sql.DB, searchUserID string, searchKeyword string, searchYear string, searchTag string, task string) ([]ResultA, error) {
+	var query string
+	var args []interface{}
+
+	switch task {
+	case "task_a":
+		//query = "SELECT * FROM movies WHERE UserID = ? AND Keyword = ? AND Year = ? AND Tag = ? ORDER BY Time DESC LIMIT 3"
+		query = "SELECT movieID,rating FROM ratings WHERE UserID = ? ORDER BY timestamp DESC "
+		// 转换字符串为整数
+		searchUserID, err := strconv.Atoi(searchUserID)
+		if err != nil {
+			return nil, err
+		}
+		args = []interface{}{searchUserID}
+		rows, err := db.Query(query, args...)
+		//rows, err := db.Query(query)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		var results []ResultA
+
+		for rows.Next() {
+			var movieID int
+			var rating string
+			err := rows.Scan(&movieID, &rating)
+			if err != nil {
+				return nil, err
+			}
+
+			result := ResultA{
+				MovieID: movieID,
+				Rating:  rating,
+			}
+			results = append(results, result)
+		}
+
+		return results, nil
+	case "task_b":
+		// Add logic for task_b query
+	case "task_c":
+		// Add logic for task_c query
+	case "task_d":
+		// Add logic for task_d query
+	case "task_e":
+		// Add logic for task_e query
+	default:
+		return nil, fmt.Errorf("Invalid task specified")
+	}
+	return nil, nil
+}
+
+func main() {
+	// 设置数据库连接信息
+	db, err := sql.Open("mysql", "root:qcwh2018@tcp(localhost:3306)/movie")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// 测试数据库连接
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Successfully connected to the database!")
+
+	// 获取前端发送的数据
+	userId := "20"
+	keyword := "1"
+	year := "1"
+	tag := "1"
+	selectedTask := "task_a"
+
+	// 执行查询，获取结果
+	results, err := executeQuery(db, userId, keyword, year, tag, selectedTask)
+	if err != nil {
+		return
+	}
+
+	// 将查询结果以合适的格式返回给前端
+	fmt.Println(results)
+}

@@ -7,25 +7,11 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
-
-// Movie 表示电影实体结构
-type Movie struct {
-	Title    string    `json:"title"`
-	Rating   float64   `json:"rating"`
-	Tags     []string  `json:"tags"`
-	DateTime time.Time `json:"dateTime"`
-}
-
-// UserMovieInfo 表示用户电影信息实体结构
-type UserMovieInfo struct {
-	Movie   Movie    `json:"movie"`
-	TopTags []string `json:"topTags"`
-}
 
 func main() {
 	// 设置数据库连接信息
@@ -49,254 +35,146 @@ func main() {
 	router.Static("/static", "static") // 静态文件路径
 
 	// 设置路由规则
-	router.GET("/", func(c *gin.Context) {
-		ginHtml(c)
-	})
+	router.GET("/", ginHtml)
 
-	router.POST("/", func(c *gin.Context) {
-		userID := c.PostForm("userId")
+	router.POST("/taska", func(c *gin.Context) {
+		// 获取前端发送的数据
+		userId := c.PostForm("userId")
 		keyword := c.PostForm("keyword")
 		year := c.PostForm("year")
 		tag := c.PostForm("tag")
-		task := c.PostForm("task")
+		selectedTask := c.PostForm("task")
 
-		var result interface{}
-
-		switch task {
-		case "task_a":
-			result = searchTaskA(db, userID, keyword, year, tag)
-		case "task_b":
-			result = searchTaskB(db, year)
-		case "task_c":
-			result = searchTaskC(db, tag)
-		case "task_d":
-			result = searchTaskD(db, userID)
-		case "task_e":
-			minRating, err := strconv.ParseFloat(keyword, 64)
-			if err != nil {
-				log.Println("Error converting keyword to float64:", err)
-				// 处理转换错误的情况，可以返回错误信息给前端
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid rating format"})
-				return
-			}
-			result = searchTaskE(db, userID, minRating)
+		// 执行查询，获取结果
+		results, err := executeQuery(db, userId, keyword, year, tag, selectedTask)
+		if err != nil {
+			log.Println("Error executing query:", err)
+			c.HTML(http.StatusInternalServerError, "error.html", nil)
+			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"result": result})
+		// 将查询结果以合适的格式返回给前端
+		c.JSON(http.StatusOK, results)
 	})
 
 	router.Run(":8080")
 }
 
-func searchTaskA(db *sql.DB, userID, keyword, year, tag string) []UserMovieInfo {
-	rows, err := db.Query(`
-		SELECT m.title, r.rating, t.tag, FROM_UNIXTIME(r.timestamp) as dateTime
-		FROM ratings r
-		JOIN movies m ON r.movieId = m.movieId
-		LEFT JOIN tags t ON r.userId = t.userId AND r.movieId = t.movieId
-		WHERE r.userId = ?
-		ORDER BY r.timestamp DESC
-	`, userID)
-
-	if err != nil {
-		log.Println("Error executing query:", err)
-		return nil
-	}
-	defer rows.Close()
-
-	var userMovieInfos []UserMovieInfo
-
-	for rows.Next() {
-		var title, tag string
-		var rating float64
-		var dateTime time.Time
-
-		err := rows.Scan(&title, &rating, &tag, &dateTime)
-		if err != nil {
-			log.Println("Error scanning row:", err)
-			continue
-		}
-
-		userMovieInfo := UserMovieInfo{
-			Movie: Movie{
-				Title:    title,
-				Rating:   rating,
-				DateTime: dateTime,
-			},
-			TopTags: []string{tag},
-		}
-
-		userMovieInfos = append(userMovieInfos, userMovieInfo)
-	}
-
-	return userMovieInfos
-}
-func searchTaskB(db *sql.DB, year string) []Movie {
-	// 查询不同年代的电影并按受欢迎程度排序的示例代码
-	rows, err := db.Query(`
-		SELECT m.title, AVG(r.rating) as avgRating
-		FROM movies m
-		JOIN ratings r ON m.movieId = r.movieId
-		WHERE m.year = ?
-		GROUP BY m.title
-		ORDER BY avgRating DESC
-		LIMIT 20
-	`, year)
-
-	if err != nil {
-		log.Println("Error executing query:", err)
-		return nil
-	}
-	defer rows.Close()
-
-	var movies []Movie
-
-	for rows.Next() {
-		var title string
-		var avgRating float64
-
-		err := rows.Scan(&title, &avgRating)
-		if err != nil {
-			log.Println("Error scanning row:", err)
-			continue
-		}
-
-		movie := Movie{
-			Title:  title,
-			Rating: avgRating,
-		}
-
-		movies = append(movies, movie)
-	}
-
-	return movies
+type ResultA struct {
+	Movie  string   `json:"movie"`
+	Rating string   `json:"rating"`
+	Tag    []string `json:"tag"`
 }
 
-func searchTaskC(db *sql.DB, genre string) []Movie {
-	// 查询某一风格最受欢迎的20部电影的示例代码
-	rows, err := db.Query(`
-		SELECT m.title, AVG(r.rating) as avgRating
-		FROM movies m
-		JOIN ratings r ON m.movieId = r.movieId
-		WHERE FIND_IN_SET(?, m.genres) > 0
-		GROUP BY m.title
-		ORDER BY avgRating DESC
-		LIMIT 20
-	`, genre)
+// 修改 executeQuery 函数返回结果
+// 修改 executeQuery 函数
+func executeQuery(db *sql.DB, searchUserID string, searchKeyword string, searchYear string, searchTag string, task string) ([]ResultA, error) {
+	var args []interface{}
 
-	if err != nil {
-		log.Println("Error executing query:", err)
-		return nil
-	}
-	defer rows.Close()
+	switch task {
 
-	var movies []Movie
-
-	for rows.Next() {
-		var title string
-		var avgRating float64
-
-		err := rows.Scan(&title, &avgRating)
+	case "task_a":
+		query := `
+    SELECT
+        m.title,
+        r.rating,
+        SUBSTRING_INDEX(GROUP_CONCAT(gt.tag ORDER BY g.relevance DESC), ',', 3) AS top_tags
+    FROM
+        ratings r
+    JOIN
+        movies m ON r.movieId = m.movieId
+    LEFT JOIN
+        genomescores g ON r.movieId = g.movieId
+	LEFT JOIN
+		genometags gt ON g.tagId = gt.tagId
+    WHERE
+        r.userId = ?
+    GROUP BY
+        r.movieId, r.rating, r.timestamp
+    ORDER BY
+        r.timestamp DESC
+`
+		searchUserID, err := strconv.Atoi(searchUserID)
 		if err != nil {
-			log.Println("Error scanning row:", err)
-			continue
+			return nil, err
 		}
-
-		movie := Movie{
-			Title:  title,
-			Rating: avgRating,
-		}
-
-		movies = append(movies, movie)
-	}
-
-	return movies
-}
-
-func searchTaskD(db *sql.DB, gender string) []Movie {
-	// 根据用户性别推荐最受欢迎的电影20部电影的示例代码
-	rows, err := db.Query(`
-		SELECT m.title, AVG(r.rating) as avgRating
-		FROM movies m
-		JOIN ratings r ON m.movieId = r.movieId
-		JOIN users u ON r.userId = u.userId
-		WHERE u.gender = ?
-		GROUP BY m.title
-		ORDER BY avgRating DESC
-		LIMIT 20
-	`, gender)
-
-	if err != nil {
-		log.Println("Error executing query:", err)
-		return nil
-	}
-	defer rows.Close()
-
-	var movies []Movie
-
-	for rows.Next() {
-		var title string
-		var avgRating float64
-
-		err := rows.Scan(&title, &avgRating)
+		args = []interface{}{searchUserID}
+		rows, err := db.Query(query, args...)
 		if err != nil {
-			log.Println("Error scanning row:", err)
-			continue
+			log.Println("Error executing query:", err)
+			return nil, err
+		}
+		defer rows.Close()
+
+		var results []ResultA
+
+		for rows.Next() {
+			var result ResultA
+			var topTags string
+
+			err := rows.Scan(&result.Movie, &result.Rating, &topTags)
+			if err != nil {
+				return nil, err
+			}
+
+			// 将逗号分隔的标签字符串拆分为切片
+			result.Tag = strings.Split(topTags, ",")
+
+			results = append(results, result)
 		}
 
-		movie := Movie{
-			Title:  title,
-			Rating: avgRating,
-		}
+		log.Println("Query results:", results)
 
-		movies = append(movies, movie)
-	}
+		return results, nil
+	case "task_b":
+		query := `
 
-	return movies
-}
-
-func searchTaskE(db *sql.DB, gender string, minRating float64) []Movie {
-	// 区分性别，查询高于某个评分的打分情况的示例代码
-	rows, err := db.Query(`
-		SELECT m.title, r.rating
-		FROM movies m
-		JOIN ratings r ON m.movieId = r.movieId
-		JOIN users u ON r.userId = u.userId
-		WHERE u.gender = ? AND r.rating > ?
-		ORDER BY r.rating DESC
-	`, gender, minRating)
-
-	if err != nil {
-		log.Println("Error executing query:", err)
-		return nil
-	}
-	defer rows.Close()
-
-	var movies []Movie
-
-	for rows.Next() {
-		var title string
-		var rating float64
-
-		err := rows.Scan(&title, &rating)
+`
+		searchUserID, err := strconv.Atoi(searchUserID)
 		if err != nil {
-			log.Println("Error scanning row:", err)
-			continue
+			return nil, err
+		}
+		args = []interface{}{searchUserID}
+		rows, err := db.Query(query, args...)
+		if err != nil {
+			log.Println("Error executing query:", err)
+			return nil, err
+		}
+		defer rows.Close()
+
+		var results []ResultA
+
+		for rows.Next() {
+			var result ResultA
+			var topTags string
+
+			err := rows.Scan(&result.Movie, &result.Rating, &topTags)
+			if err != nil {
+				return nil, err
+			}
+
+			// 将逗号分隔的标签字符串拆分为切片
+			result.Tag = strings.Split(topTags, ",")
+
+			results = append(results, result)
 		}
 
-		movie := Movie{
-			Title:  title,
-			Rating: rating,
-		}
+		log.Println("Query results:", results)
 
-		movies = append(movies, movie)
+		return results, nil
+		// Add logic for task_b query
+	case "task_c":
+		// Add logic for task_c query
+	case "task_d":
+		// Add logic for task_d query
+	case "task_e":
+		// Add logic for task_e query
+	default:
+		return nil, fmt.Errorf("Invalid task specified" + searchUserID)
 	}
-
-	return movies
+	return nil, nil
 }
 
 func ginHtml(c *gin.Context) {
-	// 传递给 HTML 模板的数据
-	data := gin.H{"user_name": "lihan", "age": 32, "status": http.StatusOK, "data": gin.H{"id": 1, "name": "lihan"}}
-	c.HTML(http.StatusOK, "index.html", data)
+	c.HTML(http.StatusOK, "index.html", nil)
 }

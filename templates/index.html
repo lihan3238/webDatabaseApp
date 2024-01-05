@@ -34,62 +34,109 @@
                 <option value="task_e">任务E：区分性别，查询高于某个评分的打分情况.</option>
             </select>
 
-            <button type="button" onclick="search()">搜索</button>
+            <!-- 修改按钮的onclick属性 -->
+            <button type="button" onclick="executeTask()">搜索</button>
         </form>
 
+
         <div id="results">
-            <div id="movieResults"></div>
+            <!-- 在这里新增一个底部div -->
+            <div id="output"></div>
+            <div id="queryResults"></div>
         </div>
     </div>
 
+    <!-- 添加JavaScript脚本 -->
     <script>
-        function search() {
-            const userId = document.getElementById("userId").value;
-            const keyword = document.getElementById("keyword").value;
-            const year = document.getElementById("year").value;
-            const tag = document.getElementById("tag").value;
-            const task = document.getElementById("task").value;
+        function executeTask() {
+            var selectedTask = document.getElementById('task').value;
+            var outputDiv = document.getElementById('output');
 
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", "/");
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200) {
-                        const result = JSON.parse(xhr.responseText);
-                        displayResults(result, task);
-                    } else {
-                        console.error("Failed to fetch data");
-                    }
-                }
-            };
-
-            const params = `userId=${userId}&keyword=${keyword}&year=${year}&tag=${tag}&task=${task}`;
-            xhr.send(params);
-        }
-
-        function displayResults(result, task) {
-
-            console.log("Result received:", result);
-            const movieResultsDiv = document.getElementById("movieResults");
-            movieResultsDiv.innerHTML = "";
-
-            if (task === "task_a") {
-                result.forEach(userMovieInfo => {
-                    const movieDiv = document.createElement("div");
-                    movieDiv.innerHTML = `<b>${userMovieInfo.Movie.Title}</b> (Rating: ${userMovieInfo.Movie.Rating})<br>`;
-                    movieDiv.innerHTML += `Top Tags: ${userMovieInfo.TopTags.join(", ")}<br><br>`;
-                    movieResultsDiv.appendChild(movieDiv);
-                });
-            } else if (task === "task_b" || task === "task_c" || task === "task_d" || task === "task_e") {
-                result.forEach(movie => {
-                    const movieDiv = document.createElement("div");
-                    movieDiv.innerHTML = `<b>${movie.Title}</b> (Rating: ${movie.Rating})<br><br>`;
-                    movieResultsDiv.appendChild(movieDiv);
-                });
+            switch (selectedTask) {
+                case 'task_a':
+                    executeTaskA(outputDiv);
+                    break;
+                case 'task_b':
+                    executeTaskB(outputDiv);
+                    break;
+                case 'task_c':
+                    executeTaskC(outputDiv);
+                    break;
+                case 'task_d':
+                    executeTaskD(outputDiv);
+                    break;
+                case 'task_e':
+                    executeTaskE(outputDiv);
+                    break;
+                default:
+                    // 默认情况处理
+                    break;
             }
         }
+
+        // 每个任务对应的函数接受一个输出div作为参数
+        function executeTaskA(outputDiv) {
+            var selectedTask = document.getElementById('task').value;
+            var outputDiv = document.getElementById('output');
+            var userId = document.getElementById('userId').value;
+            var keyword = document.getElementById('keyword').value;
+            var year = document.getElementById('year').value;
+            var tag = document.getElementById('tag').value;
+
+            // 构建 FormData 对象
+            var formData = new FormData();
+            formData.append('task', selectedTask);
+            formData.append('userId', userId);
+            formData.append('keyword', keyword);
+            formData.append('year', year);
+            formData.append('tag', tag);
+
+            // 使用fetch向后端发送请求
+            fetch('/taska', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(results => {
+                    // 处理后端返回的数据
+                    outputDiv.innerHTML = formatResultsA(results);
+                })
+                .catch(error => {
+                    // 处理错误情况
+                    outputDiv.innerHTML = 'Error: ' + error.message;
+                });
+        }
+        function formatResultsA(results) {
+            var output = '';
+            for (var i = 0; i < results.length; i++) {
+                output += 'Movie: ' + results[i].movie + ' Rating: ' + results[i].rating + ' Tag: ' + results[i].tag[0] + ',' + results[i].tag[1] + ',' + results[i].tag[2] + '' + '<br>';
+            }
+            return output;
+        }
+
+
+
+        function executeTaskB(outputDiv) {
+            // 处理任务B的逻辑，输出文字到outputDiv
+            outputDiv.innerHTML = 'Executing Task B';
+        }
+
+        function executeTaskC(outputDiv) {
+            // 处理任务C的逻辑，输出文字到outputDiv
+            outputDiv.innerHTML = 'Executing Task C';
+        }
+
+        function executeTaskD(outputDiv) {
+            // 处理任务D的逻辑，输出文字到outputDiv
+            outputDiv.innerHTML = 'Executing Task D';
+        }
+
+        function executeTaskE(outputDiv) {
+            // 处理任务E的逻辑，输出文字到outputDiv
+            outputDiv.innerHTML = 'Executing Task E';
+        }
     </script>
+
 </body>
 
 </html>
