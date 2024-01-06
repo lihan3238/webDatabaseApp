@@ -2,6 +2,72 @@
 
 ## web操作
 
+- gin+html/css/js
+
+- 前端根据用户输入向后端传入参数：用户ID、关键词、年份、标签、任务
+- 后端执行数据库查询并以json返回查询结果到前端输出
+
+```golang
+// main.go
+package main
+
+import (
+    // 导入所需的包
+
+func main() {
+    // 设置数据库连接信息
+    // ...
+
+    // 设置静态文件目录
+    // ...
+
+    // 设置路由规则
+    // ...
+
+    // 运行服务器
+    // ...
+}
+
+// 结构体定义
+type ResultA struct {
+    Movie  string   `json:"movie"`
+    Rating string   `json:"rating"`
+    Tag    []string `json:"tag"`
+}
+
+// executeQuery 函数
+func executeQuery(db *sql.DB, searchUserID string, searchKeyword string, searchYear string, searchTag string, task string) ([]ResultA, error) {
+    // 根据不同任务执行相应的数据库查询
+    switch task {
+        case "task_a":
+            // 任务A的查询逻辑
+            // ...
+        case "task_b":
+            // 任务B的查询逻辑
+            // ...
+        case "task_c":
+            // 任务C的查询逻辑
+            // ...
+        case "task_d":
+            // 任务D的查询逻辑
+            // ...
+        case "task_e":
+            // 任务E的查询逻辑
+            // ...
+        default:
+            return nil, fmt.Errorf("Invalid task specified" + searchUserID)
+    }
+
+    return nil, nil
+}
+
+// ginHtml 函数
+func ginHtml(c *gin.Context) {
+    // 处理HTML请求的逻辑
+    // ...
+}
+
+```
 
 ## mysqlclutser数据库操作
 
@@ -187,8 +253,17 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
+```
+### 查询例子简要展示
+此处展示任务a的查询结果
 
+![Alt text](assets/imgs/image.png)
 
+当输入用户id时展示查询结果
+
+![Alt text](assets/imgs/image-1.png)
+
+![Alt text](assets/imgs/image-2.png)
 
 
 

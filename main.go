@@ -15,7 +15,10 @@ import (
 
 func main() {
 	// 设置数据库连接信息
-	db, err := sql.Open("mysql", "root:qcwh2018@tcp(localhost:3306)/movie")
+	//虚拟机mysqlcluster
+	db, err := sql.Open("mysql", "root:123456@tcp(192.168.50.128:3306)/movie")
+	//本地mysql
+	//db, err := sql.Open("mysql", "root:qc@tcp(localhost:3306)/movie")
 	if err != nil {
 		log.Fatal(err)
 	}
