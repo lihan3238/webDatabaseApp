@@ -23,9 +23,6 @@
             <label for="year">年代:</label>
             <input type="text" id="year" name="year">
 
-            <label for="tag">标签:</label>
-            <input type="text" id="tag" name="tag">
-
             <select id="task" name="task">
                 <option value="task_a">任务A：根据用户ID，搜索用户所看的电影名字和评分，按时间从新到旧排序，并给出电影的关联度评分最高的前三个标签；</option>
                 <option value="task_b">任务B：查询不同年代（如1980，1990）的电影，并按受欢迎程度排序。</option>
@@ -81,7 +78,6 @@
             var userId = document.getElementById('userId').value;
             var keyword = document.getElementById('keyword').value;
             var year = document.getElementById('year').value;
-            var tag = document.getElementById('tag').value;
 
             // 构建 FormData 对象
             var formData = new FormData();
@@ -89,10 +85,9 @@
             formData.append('userId', userId);
             formData.append('keyword', keyword);
             formData.append('year', year);
-            formData.append('tag', tag);
 
             // 使用fetch向后端发送请求
-            fetch('/taska', {
+            fetch('/task', {
                 method: 'POST',
                 body: formData
             })
@@ -117,23 +112,162 @@
 
 
         function executeTaskB(outputDiv) {
-            // 处理任务B的逻辑，输出文字到outputDiv
-            outputDiv.innerHTML = 'Executing Task B';
+            var selectedTask = document.getElementById('task').value;
+            var outputDiv = document.getElementById('output');
+            var userId = document.getElementById('userId').value;
+            var keyword = document.getElementById('keyword').value;
+            var year = document.getElementById('year').value;
+
+
+            // 构建 FormData 对象
+            var formData = new FormData();
+            formData.append('task', selectedTask);
+            formData.append('userId', userId);
+            formData.append('keyword', keyword);
+            formData.append('year', year);
+
+            // 使用fetch向后端发送请求
+            fetch('/task', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(results => {
+                    // 处理后端返回的数据
+                    outputDiv.innerHTML = formatResultsB(results);
+                })
+                .catch(error => {
+                    // 处理错误情况
+                    outputDiv.innerHTML = 'Error: ' + error.message;
+                });
+        }
+        function formatResultsB(results) {
+            var output = '';
+            for (var i = 0; i < results.length; i++) {
+                output += 'Movie: ' + results[i].movie + ' Rating: ' + results[i].rating + '<br>';
+            }
+            return output;
         }
 
         function executeTaskC(outputDiv) {
             // 处理任务C的逻辑，输出文字到outputDiv
-            outputDiv.innerHTML = 'Executing Task C';
+            var selectedTask = document.getElementById('task').value;
+            var outputDiv = document.getElementById('output');
+            var userId = document.getElementById('userId').value;
+            var keyword = document.getElementById('keyword').value;
+            var year = document.getElementById('year').value;
+
+
+            // 构建 FormData 对象
+            var formData = new FormData();
+            formData.append('task', selectedTask);
+            formData.append('userId', userId);
+            formData.append('keyword', keyword);
+            formData.append('year', year);
+
+            // 使用fetch向后端发送请求
+            fetch('/task', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(results => {
+                    // 处理后端返回的数据
+                    outputDiv.innerHTML = formatResultsC(results);
+                })
+                .catch(error => {
+                    // 处理错误情况
+                    outputDiv.innerHTML = 'Error: ' + error.message;
+                });
+        }
+        function formatResultsC(results) {
+            var output = '';
+            for (var i = 0; i < results.length; i++) {
+                output += 'Movie: ' + results[i].movie + '<br>';
+            }
+            return output;
         }
 
         function executeTaskD(outputDiv) {
+
             // 处理任务D的逻辑，输出文字到outputDiv
-            outputDiv.innerHTML = 'Executing Task D';
+            var selectedTask = document.getElementById('task').value;
+            var outputDiv = document.getElementById('output');
+            var userId = document.getElementById('userId').value;
+            var keyword = document.getElementById('keyword').value;
+            var year = document.getElementById('year').value;
+
+
+            // 构建 FormData 对象
+            var formData = new FormData();
+            formData.append('task', selectedTask);
+            formData.append('userId', userId);
+            formData.append('keyword', keyword);
+            formData.append('year', year);
+
+
+            // 使用fetch向后端发送请求
+            fetch('/task', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(results => {
+                    // 处理后端返回的数据
+                    outputDiv.innerHTML = formatResultsD(results);
+                })
+                .catch(error => {
+                    // 处理错误情况
+                    outputDiv.innerHTML = 'Error: ' + error.message;
+                });
+        }
+        function formatResultsD(results) {
+            var output = '';
+            for (var i = 0; i < results.length; i++) {
+                output += 'Movie: ' + results[i].movie + '<br>';
+            }
+            return output;
         }
 
         function executeTaskE(outputDiv) {
+
             // 处理任务E的逻辑，输出文字到outputDiv
-            outputDiv.innerHTML = 'Executing Task E';
+            var selectedTask = document.getElementById('task').value;
+            var outputDiv = document.getElementById('output');
+            var userId = document.getElementById('userId').value;
+            var keyword = document.getElementById('keyword').value;
+            var year = document.getElementById('year').value;
+
+
+            // 构建 FormData 对象
+            var formData = new FormData();
+            formData.append('task', selectedTask);
+            formData.append('userId', userId);
+            formData.append('keyword', keyword);
+            formData.append('year', year);
+
+
+            // 使用fetch向后端发送请求
+            fetch('/task', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(results => {
+                    // 处理后端返回的数据
+                    outputDiv.innerHTML = formatResultsE(results);
+                })
+                .catch(error => {
+                    // 处理错误情况
+                    outputDiv.innerHTML = 'Error: ' + error.message;
+                });
+        }
+        function formatResultsE(results) {
+            var output = '';
+            for (var i = 0; i < results.length; i++) {
+                output += '性别: ' + results[i].gender + '评分数量:' + results[i].rating_num + '<br>';
+            }
+            return output;
         }
     </script>
 
