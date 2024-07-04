@@ -17,13 +17,14 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-form {
-    display: grid;
-    gap: 10px;
+#searchForm {
+    display: flex;
+    flex-direction: column;
 }
 
 label {
     font-weight: bold;
+
 }
 
 input {
